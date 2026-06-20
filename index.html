@@ -355,7 +355,7 @@ function renderRegion(d,wd){
   const bar=Math.min(100,rp);
 
   let h='<div class="card" style="background:linear-gradient(135deg,#1a6b3c,#166534);color:#fff;padding:18px;border-radius:14px;">';
-  h+='<div style="font-size:11px;color:rgba(255,255,255,.6);margin-bottom:4px;">💰 تحقيق التمويل — المنطقة الغربية</div>';
+  h+='<div style="font-size:11px;color:rgba(255,255,255,.6);margin-bottom:4px;">💰 تحقيق التمويل — المنطقة الجنوبية</div>';
   h+='<div style="font-size:30px;font-weight:900;">'+totF.toLocaleString('ar-SA')+' <span style="font-size:13px;opacity:.7">ريال</span></div>';
   h+='<div style="background:rgba(255,255,255,.2);border-radius:20px;height:6px;margin:10px 0 4px;"><div style="background:#3ABF6E;height:6px;border-radius:20px;width:'+bar+'%;"></div></div>';
   h+='<div style="display:flex;justify-content:space-between;font-size:10px;opacity:.75">';
@@ -1610,7 +1610,7 @@ function renderEmpReport(){
   const pending=cReqsM.filter(r=>!['approved','rejected','done'].includes(r.status)).length;
 
   h+='<div style="background:linear-gradient(135deg,#6B21A8,#166534);border-radius:16px;padding:16px;margin-bottom:16px;">';
-  h+='<div style="font-size:11px;color:rgba(255,255,255,0.7);margin-bottom:8px;">إجمالي طلبات المنطقة الغربية</div>';
+  h+='<div style="font-size:11px;color:rgba(255,255,255,0.7);margin-bottom:8px;">إجمالي طلبات المنطقة الجنوبية</div>';
   h+='<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;">';
   [{l:'الكل',v:totalReqs,c:'#fff'},{l:'✅ موافق',v:approved,c:'#86EFAC'},{l:'❌ مرفوض',v:rejected,c:'#FCA5A5'},{l:'⏳ معلّق',v:pending,c:'#FDE68A'}]
     .forEach(x=>{h+='<div style="background:rgba(255,255,255,0.12);border-radius:10px;padding:10px;text-align:center;"><div style="font-size:22px;font-weight:900;color:'+x.c+';">'+x.v+'</div><div style="font-size:10px;color:rgba(255,255,255,0.6);">'+x.l+'</div></div>';});
