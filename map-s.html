@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>هلا تمويل — خريطة العملاء (الجنوبية)</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="map_clients_s.js"></script>
+<style>
+*{{margin:0;padding:0;box-sizing:border-box;}}
+:root{{
+  --bg:#080F20;--bg2:#0A0F1E;--bg3:#0D1B3E;
+  --border:#1E2A4A;--text:#E8EBF4;--mid:#8DA0B8;--light:#4A6080;
+  --green:#00C896;--purple:#7C3AED;--gold:#F5A623;--red:#F87171;
+}}
+body{{background:var(--bg);color:var(--text);font-family:\'Cairo\',sans-serif;height:100vh;display:flex;flex-direction:column;}}
+#top-bar{{background:var(--bg2);border-bottom:1px solid var(--border);padding:10px 16px;display:flex;align-items:center;gap:12px;flex-shrink:0;}}
+#back-btn{{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:6px 14px;color:var(--mid);cursor:pointer;font-family:inherit;font-size:13px;}}
+#map-stats{{display:flex;gap:12px;margin-right:auto;font-size:12px;}}
+.stat-badge{{background:var(--bg3);border:1px solid var(--border);border-radius:20px;padding:4px 12px;color:var(--mid);}}
+.stat-badge span{{color:var(--green);font-weight:700;}}
+#map{{flex:1;}}
+#visit-panel{{position:fixed;bottom:0;left:0;right:0;background:var(--bg2);border-top:2px solid var(--border);padding:16px;transform:translateY(100%);transition:transform 0.3s;z-index:1000;max-height:85vh;overflow-y:auto;border-radius:16px 16px 0 0;}}
+#visit-panel.open{{transform:translateY(0);}}
+.panel-handle{{width:40px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 16px;}}
+.q-section{{background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:12px;}}
+.q-label{{font-size:12px;color:var(--mid);margin-bottom:10px;line-height:1.5;}}
+.q-title{{font-size:13px;font-weight:700;margin-bottom:8px;color:var(--text);}}
+.yn-btns{{display:grid;grid-template-columns:1fr 1fr;gap:8px;}}
+.yn-btn{{padding:10px;border-radius:10px;border:1.5px solid var(--border);background:transparent;color:var(--mid);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;transition:all 0.2s;}}
+.yn-btn.yes.active{{border-color:var(--green);background:#00C89622;color:var(--green);}}
+.yn-btn.no.active{{border-color:var(--red);background:#F8717122;color:var(--red);}}
+.url-input{{width:100%;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;padding:10px 14px;color:var(--text);font-size:13px;outline:none;font-family:inherit;direction:ltr;margin-top:8px;}}
+.url-input::placeholder{{color:var(--light);}}
+.url-input:focus{{border-color:var(--green);}}
+.save-btn{{width:100%;padding:14px;background:linear-gradient(135deg,#00C896,#028090);border:none;border-radius:12px;color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:8px;}}
+.close-btn{{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:10px;width:100%;color:var(--mid);font-size:13px;cursor:pointer;font-family:inherit;margin-top:8px;}}
+.client-info-card{{background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:12px;}}
+.client-name{{font-size:16px;font-weight:800;margin-bottom:4px;}}
+.client-meta{{font-size:11px;color:var(--light);line-height:1.8;}}
+.progress-bar-wrap{{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:10px 14px;margin-bottom:10px;}}
+.progress-label{{font-size:11px;color:var(--mid);margin-bottom:6px;display:flex;justify-content:space-between;}}
+.progress-bar{{height:8px;background:var(--border);border-radius:4px;overflow:hidden;}}
+.progress-fill{{height:100%;background:linear-gradient(90deg,#00C896,#028090);border-radius:4px;transition:width 0.5s;}}
+</style>
+</head>
+<body>
+<div id="top-bar">
+  <button id="back-btn" onclick="window.location.href=\'index.html\'">← رجوع</button>
+  <div style="font-size:13px;font-weight:700;">🗺️ خريطة العملاء</div>
+  <div id="map-stats" style="margin-right:auto;">
+    <div class="stat-badge">الكل: <span id="total-count">0</span></div>
+    <div class="stat-badge">زيارات اليوم: <span id="today-count" style="color:var(--gold);">0</span></div>
+    <div class="stat-badge">المتبقي: <span id="remain-count">0</span></div>
+  </div>
+</div>
+<div id="map"></div>
+
+<div id="visit-panel">
+  <div class="panel-handle"></div>
+  <div class="client-info-card">
+    <div class="client-name" id="vp-name">—</div>
+    <div class="client-meta" id="vp-meta"></div>
+  </div>
+  <div class="progress-bar-wrap">
+    <div class="progress-label">
+      <span>إنجاز زياراتك اليوم</span>
+      <span id="prog-text">0/0</span>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="prog-fill" style="width:0%"></div></div>
+  </div>
+  <div class="q-section">
+    <div class="q-title">١. هل العميل مهتم بالتمويل؟</div>
+    <div class="yn-btns">
+      <button class="yn-btn yes" onclick="setQ(\'interested\',true,this)">✅ نعم</button>
+      <button class="yn-btn no" onclick="setQ(\'interested\',false,this)">❌ لا</button>
+    </div>
+  </div>
+  <div class="q-section">
+    <div class="q-title">٢. هل تم شرح خدمة التمويل؟</div>
+    <div class="yn-btns">
+      <button class="yn-btn yes" onclick="setQ(\'explained\',true,this)">✅ نعم</button>
+      <button class="yn-btn no" onclick="setQ(\'explained\',false,this)">❌ لا</button>
+    </div>
+  </div>
+  <div class="q-section">
+    <div class="q-title">٣. صورة الجهاز (مع رقمه)</div>
+    <div class="q-label">ارفع الصورة على Google Drive أو أي سحابة وضع الرابط هنا</div>
+    <input class="url-input" id="q-device-url" placeholder="https://drive.google.com/..." type="url"/>
+  </div>
+  <div class="q-section">
+    <div class="q-title">٤. صورة المحل</div>
+    <input class="url-input" id="q-shop-url" placeholder="https://drive.google.com/..." type="url"/>
+  </div>
+  <div class="q-section">
+    <div class="q-title">٥. هل تم إرسال رسالة التمويل للمسؤول؟</div>
+    <div class="yn-btns">
+      <button class="yn-btn yes" onclick="setQ(\'msg_sent\',true,this)">✅ نعم</button>
+      <button class="yn-btn no" onclick="setQ(\'msg_sent\',false,this)">❌ لا</button>
+    </div>
+  </div>
+  <button class="save-btn" onclick="saveVisit()">💾 حفظ الزيارة</button>
+  <button class="close-btn" onclick="closePanel()">إلغاء</button>
+</div>
+
+<script>
+const DATA_VAR = 'MAP_CLIENTS_S';
+const SITE = 'south';
+const SB = 'https://ggmvlrwbmnuvnnrojrcs.supabase.co';
+const SK = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdnbXZscndibW51dm5ucm9qcmNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3MTI2MjYsImV4cCI6MjA5MzI4ODYyNn0.fSfgSVe_7nI_XzWY3L25gy86HLAxC0e99RdRdMGD_kY';
+const SH = {{'Content-Type':'application/json',apikey:SK,Authorization:'Bearer '+SK}};
+
+// Load user
+let user = null;
+try {{ user = JSON.parse(localStorage.getItem('hu5')); }} catch(e) {{}}
+if(!user) {{ window.location.href='index.html'; }}
+
+const ALL_CLIENTS = window[DATA_VAR] || {{}};
+const META = window[DATA_VAR+'_META'] || {{center:[24.7,46.7],zoom:10}};
+const EMP_ZONE = user ? (ALL_CLIENTS[user.code] ? [user.code] : Object.keys(ALL_CLIENTS)) : Object.keys(ALL_CLIENTS);
+const IS_MGR = user && (user.role==='region'||user.role==='supervisor'||user.role==='owner');
+
+// Get clients to show
+const myClients = IS_MGR 
+  ? Object.values(ALL_CLIENTS).flat() 
+  : (ALL_CLIENTS[user?.code] || []);
+
+// Colors per employee
+const EMP_COLORS = {{'S1-WH':'#00C896','S2-OH':'#F5A623','S6-AM':'#7C3AED','S7-MY':'#3B9EFF','S9-AI':'#F87171'}};
+
+// Visits storage
+function getVisits() {{
+  try {{ return JSON.parse(localStorage.getItem('visits_'+SITE) || '{{}}'); }} catch(e) {{ return {{}}; }}
+}}
+function saveVisitLocal(id, data) {{
+  const v = getVisits(); v[id] = data; localStorage.setItem('visits_'+SITE, JSON.stringify(v));
+}}
+function getTodayVisits() {{
+  const today = new Date().toISOString().slice(0,10);
+  return Object.values(getVisits()).filter(v => v.date === today);
+}}
+
+// Map init
+const map = L.map('map').setView([18.5, 42.5], 8);
+L.tileLayer('https://{{s}}.tile.openstreetmap.org/{{z}}/{{x}}/{{y}}.png', {{
+  attribution:'© OpenStreetMap', maxZoom:19
+}}).addTo(map);
+
+// Markers
+let activeClientId = null;
+let visitData = {{}};
+const visits = getVisits();
+const markers = {{}};
+
+function makeIcon(color, visited) {{
+  const fill = visited ? '#00C896' : color;
+  return L.divIcon({{
+    html: `<div style="width:14px;height:14px;border-radius:50%;background:${{fill}};border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.4)"></div>`,
+    className:'', iconSize:[14,14], iconAnchor:[7,7]
+  }});
+}}
+
+// Draw markers
+const showEmps = IS_MGR ? Object.keys(ALL_CLIENTS) : [user?.code];
+let total = 0;
+showEmps.forEach(code => {{
+  const clients = ALL_CLIENTS[code] || [];
+  const color = EMP_COLORS[code] || '#7C3AED';
+  total += clients.length;
+  clients.forEach(c => {{
+    if(!c.lat || !c.lng) return;
+    const visited = !!visits[c.id];
+    const m = L.marker([c.lat, c.lng], {{icon:makeIcon(color, visited)}}).addTo(map);
+    m.on('click', () => openVisit(c, code, color));
+    markers[c.id] = {{marker:m, code, color, client:c}};
+  }});
+}});
+
+// Update stats
+function updateStats() {{
+  const todayV = getTodayVisits();
+  document.getElementById('total-count').textContent = total;
+  document.getElementById('today-count').textContent = todayV.length;
+  document.getElementById('remain-count').textContent = total - Object.keys(getVisits()).length;
+  const myTotal = (ALL_CLIENTS[user?.code]||[]).length;
+  const myToday = todayV.filter(v=>v.agent===user?.code).length;
+  document.getElementById('prog-text').textContent = myToday+'/'+Math.min(5,myTotal);
+  document.getElementById('prog-fill').style.width = Math.min(100, myToday/5*100)+'%';
+}}
+updateStats();
+
+// Open visit panel
+function openVisit(client, code, color) {{
+  activeClientId = client.id;
+  visitData = {{interested:null, explained:null, msg_sent:null, device_url:'', shop_url:''}};
+  document.getElementById('vp-name').textContent = client.name || 'عميل '+client.id;
+  document.getElementById('vp-meta').innerHTML = 
+    'Cashier ID: '+client.id+' · TID: '+client.tid+'<br>'+
+    'جوال المدير: '+client.manager+' · المالك: '+client.owner+'<br>'+
+    'آخر نشاط: '+client.lastbeat+' · مبيعات: '+(client.total||0).toLocaleString()+' SAR';
+  // Reset buttons
+  document.querySelectorAll('.yn-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('q-device-url').value = '';
+  document.getElementById('q-shop-url').value = '';
+  document.getElementById('visit-panel').classList.add('open');
+  // WhatsApp shortcut (kept)
+  map.setView([client.lat, client.lng], 16);
+}}
+
+function closePanel() {{
+  document.getElementById('visit-panel').classList.remove('open');
+  activeClientId = null;
+}}
+
+function setQ(key, val, btn) {{
+  visitData[key] = val;
+  const parent = btn.closest('.yn-btns');
+  parent.querySelectorAll('.yn-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}}
+
+async function saveVisit() {{
+  if(!activeClientId) return;
+  const client = Object.values(ALL_CLIENTS).flat().find(c=>c.id===activeClientId);
+  if(!client) return;
+  
+  visitData.device_url = document.getElementById('q-device-url').value;
+  visitData.shop_url = document.getElementById('q-shop-url').value;
+  
+  const visit = {{
+    ...visitData,
+    id: activeClientId,
+    client_name: client.name,
+    tid: client.tid,
+    agent: user?.code,
+    agent_name: user?.name,
+    date: new Date().toISOString().slice(0,10),
+    ts: new Date().toISOString(),
+    region: SITE,
+  }};
+  
+  // Save locally
+  saveVisitLocal(activeClientId, visit);
+  
+  // Save to Supabase
+  try {{
+    await fetch(SB+'/rest/v1/map_visits', {{
+      method:'POST',
+      headers:{{...SH,Prefer:'return=representation'}},
+      body: JSON.stringify([visit])
+    }});
+  }} catch(e) {{ console.log('Supabase save failed (offline):', e); }}
+  
+  // Update marker color
+  if(markers[activeClientId]) {{
+    markers[activeClientId].marker.setIcon(makeIcon(markers[activeClientId].color, true));
+  }}
+  
+  updateStats();
+  closePanel();
+  alert('✅ تم حفظ الزيارة!');
+}}
+
+// Keyboard close
+document.addEventListener('keydown', e => {{ if(e.key==='Escape') closePanel(); }});
+</script>
+</body>
+</html>
