@@ -114,12 +114,19 @@ async function dbGet(t,q=''){const r=await fetch(SB+'/rest/v1/'+t+q,{headers:SH}
 async function dbUp(t,b,c){const r=await fetch(SB+'/rest/v1/'+t+'?on_conflict='+c,{method:'POST',headers:{...SH,Prefer:'resolution=merge-duplicates,return=representation'},body:JSON.stringify(b)});if(!r.ok)throw new Error(await r.text());return r.json();}
 async function dbIns(t,b){const r=await fetch(SB+'/rest/v1/'+t,{method:'POST',headers:{...SH,Prefer:'return=representation'},body:JSON.stringify(b)});if(!r.ok)throw new Error(await r.text());return r.json();}
 async function dbPatch(t,m,b){const q=Object.entries(m).map(([k,v])=>k+'=eq.'+encodeURIComponent(v)).join('&');const r=await fetch(SB+'/rest/v1/'+t+'?'+q,{method:'PATCH',headers:{...SH,Prefer:'return=representation'},body:JSON.stringify(b)});if(!r.ok)throw new Error(await r.text());return r.json();}
+
+
+function djb2(s){let h=5381;for(let i=0;i<s.length;i++)h=((h<<5)+h+s.charCodeAt(i))>>>0;return String(h);}
+function sanitize(str){
+  if(!str) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#x27;');
+}
 async function dbDel(t,m){const q=Object.entries(m).map(([k,v])=>k+'=eq.'+encodeURIComponent(v)).join('&');await fetch(SB+'/rest/v1/'+t+'?'+q,{method:'DELETE',headers:SH});}
 
 // ── DATA ─────────────────────────────────────────
-const SPIN='1469', RGN='SOUTH-MGR', _OWN='CR7';
+const SPIN='2088292985', RGN='SOUTH-MGR', _OWN='CR7';
 const SUPS=[RGN];
-const EMP_PINS={'S1-WH':'1793','S2-OH':'2072','S6-AM':'2528','S7-MY':'2193','S9-AI':'1997'};
+const EMP_PINS={'S1-WH':'2088296345','S2-OH':'2088324592','S6-AM':'2088329878','S7-MY':'2088325748','S9-AI':'2088298527'};
 const FIN_INIT={'S1-WH':0,'S2-OH':0,'S6-AM':0,'S7-MY':0,'S9-AI':0};
 const EMP_TGT=1000000, RGN_TGT=5000000;
 const EMP_TGT_MAP={'S1-WH':1000000,'S2-OH':1000000,'S6-AM':1000000,'S7-MY':1000000,'S9-AI':1000000};
@@ -706,14 +713,14 @@ function renderEmpList(){
   el.innerHTML=filtered.map(req=>{
     const tc=gCT(req.client_type);
     return '<button class="rcard" onclick="renderCDetail(\''+req.id+'\')">'+
-      '<div style="background:'+tc.color+';padding:10px 16px;display:flex;justify-content:space-between;align-items:center;"><span style="color:#fff;font-size:13px;font-weight:700;">'+rTitle(req.client_type)+' — '+(req.data?.client_name||'—')+'</span>'+bH(req.status)+'</div>'+
+      '<div style="background:'+tc.color+';padding:10px 16px;display:flex;justify-content:space-between;align-items:center;"><span style="color:#fff;font-size:13px;font-weight:700;">'+rTitle(req.client_type)+' — '+sanitize(req.data?.client_name||'—')+'</span>'+bH(req.status)+'</div>'+
       '<div style="padding:10px 16px;display:flex;justify-content:space-between;align-items:center;"><div><div style="font-size:11px;color:#4B5563;">'+(req.data?.cashier_id||'')+(req.data?.zone?' · '+req.data.zone:'')+'</div><div style="font-size:10px;color:#9CA3AF;">'+new Date(req.submitted_at).toLocaleDateString('ar-SA')+'</div></div><div style="font-size:14px;font-weight:700;color:'+tc.color+'">'+(req.data?.offer_amount?Number(req.data.offer_amount).toLocaleString()+' SAR':'—')+'</div></div>'+
       (req.sup_note?'<div style="padding:7px 16px;background:#F0FDF4;border-top:1px solid #E5E7EB;font-size:11px;color:#166534;">🔔 '+req.sup_note+'</div>':'')+
       '</button>';
   }).join('');
 }
 
-function renderCList(){renderEmpList();}
+
 
 function renderCList(){renderCType&&renderCType();}
 
@@ -769,7 +776,7 @@ function renderCDash(){
   else filtered.forEach(req=>{
     const tc=gCT(req.client_type);
     h+='<button class="rcard" onclick="renderCDetail(\''+req.id+'\')">';
-    h+='<div style="background:'+tc.color+';padding:10px 16px;display:flex;justify-content:space-between;align-items:center;"><span style="color:#fff;font-size:13px;font-weight:700;">'+rTitle(req.client_type)+' — '+(req.data?.client_name||'—')+'</span>'+bH(req.status)+'</div>';
+    h+='<div style="background:'+tc.color+';padding:10px 16px;display:flex;justify-content:space-between;align-items:center;"><span style="color:#fff;font-size:13px;font-weight:700;">'+rTitle(req.client_type)+' — '+sanitize(req.data?.client_name||'—')+'</span>'+bH(req.status)+'</div>';
     h+='<div style="padding:10px 16px;display:flex;justify-content:space-between;align-items:center;"><div><div style="font-size:12px;color:#4B5563;">'+req.agent_name+' · '+(req.data?.zone||'—')+'</div><div style="font-size:10px;color:#9CA3AF;">'+new Date(req.submitted_at).toLocaleDateString('ar-SA')+'</div></div><div style="display:flex;align-items:center;gap:6px;"><div style="font-size:14px;font-weight:700;color:'+tc.color+'">'+(req.data?.offer_amount?Number(req.data.offer_amount).toLocaleString()+' SAR':'—')+'</div><span style="color:#9CA3AF">›</span></div></div>';
     if(req.sup_note)h+='<div style="padding:6px 16px;background:#F0FDF4;border-top:1px solid #E5E7EB;font-size:11px;color:#166534;">🔔 '+req.sup_note+'</div>';
     h+='</button>';
@@ -1598,7 +1605,7 @@ function renderEmpReport(){
     h+='<div style="border:1px solid #E5E7EB;border-right:4px solid '+emp.color+';border-radius:12px;padding:14px;margin-bottom:12px;">';
     // Header
     h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">';
-    h+='<div><div style="font-size:14px;font-weight:800;color:'+emp.color+';">'+emp.name+'</div>';
+    h+='<div><div style="font-size:14px;font-weight:800;color:'+emp.color+';">'+sanitize(emp.name)+'</div>';
     h+='<div style="font-size:11px;color:#9CA3AF;margin-top:2px;">'+emp.code+' · '+empReqs.length+' طلب</div></div>';
     h+='<div style="text-align:center;background:'+(approvalRate>=70?'#F0FDF4':approvalRate>=50?'#FFFBEB':'#FEF2F2')+';border-radius:10px;padding:8px 14px;">';
     h+='<div style="font-size:20px;font-weight:900;color:'+(approvalRate>=70?'#166534':approvalRate>=50?'#D97706':'#DC2626')+';">'+approvalRate+'%</div>';
