@@ -116,7 +116,6 @@ async function dbIns(t,b){const r=await fetch(SB+'/rest/v1/'+t,{method:'POST',he
 async function dbPatch(t,m,b){const q=Object.entries(m).map(([k,v])=>k+'=eq.'+encodeURIComponent(v)).join('&');const r=await fetch(SB+'/rest/v1/'+t+'?'+q,{method:'PATCH',headers:{...SH,Prefer:'return=representation'},body:JSON.stringify(b)});if(!r.ok)throw new Error(await r.text());return r.json();}
 
 
-function djb2(s){let h=5381;for(let i=0;i<s.length;i++)h=((h<<5)+h+s.charCodeAt(i))>>>0;return String(h);}
 function sanitize(str){
   if(!str) return '';
   return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#x27;');
@@ -124,9 +123,9 @@ function sanitize(str){
 async function dbDel(t,m){const q=Object.entries(m).map(([k,v])=>k+'=eq.'+encodeURIComponent(v)).join('&');await fetch(SB+'/rest/v1/'+t+'?'+q,{method:'DELETE',headers:SH});}
 
 // ── DATA ─────────────────────────────────────────
-const SPIN='2088292985', RGN='SOUTH-MGR', _OWN='CR7';
+const SPIN='1469', RGN='SOUTH-MGR', _OWN='CR7';
 const SUPS=[RGN];
-const EMP_PINS={'S1-WH':'2088296345','S2-OH':'2088324592','S6-AM':'2088329878','S7-MY':'2088325748','S9-AI':'2088298527'};
+const EMP_PINS={'S1-WH':'1793','S2-OH':'2072','S6-AM':'2528','S7-MY':'2193','S9-AI':'1997'};
 const FIN_INIT={'S1-WH':0,'S2-OH':0,'S6-AM':0,'S7-MY':0,'S9-AI':0};
 const EMP_TGT=1000000, RGN_TGT=5000000;
 const EMP_TGT_MAP={'S1-WH':1000000,'S2-OH':1000000,'S6-AM':1000000,'S7-MY':1000000,'S9-AI':1000000};
